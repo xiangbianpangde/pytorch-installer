@@ -266,7 +266,13 @@ if [ "$USER_SAYS_GPU" = "1" ]; then
       CUDA_TAG="$(pick_cuda_tag "$DRIVER_VER")"
       info "依据驱动版本选择 CUDA 轮子: $CUDA_TAG (轮子自带 CUDA 运行时)"
     else
-      warn "您说有显卡, 但未检测到 NVIDIA 驱动 (nvidia-smi 不存在)"
+      # 未检测到驱动时, 先用 lspci 确认是否真的有 NVIDIA 显卡硬件
+      if command -v lspci >/dev/null 2>&1 && lspci 2>/dev/null | grep -qi nvidia; then
+        GPU_HW="$(lspci | grep -i nvidia | head -n1 | cut -d: -f3- | sed 's/^ *//')"
+        warn "检测到 NVIDIA 显卡 ($GPU_HW), 但未安装驱动 (nvidia-smi 不存在)"
+      else
+        warn "您说有显卡, 但未检测到 NVIDIA 显卡硬件, 也未检测到驱动"
+      fi
       CONFIRM_DRV="$(ask "是否自动安装 NVIDIA 驱动? [Y/n]: " "y")"
       case "$(printf '%s' "$CONFIRM_DRV" | tr '[:upper:]' '[:lower:]')" in
         n|no) warn "跳过驱动安装。注意: 无驱动时 GPU 版 PyTorch 无法使用 CUDA" ;;
@@ -355,6 +361,15 @@ if torch.backends.mps.is_available():
 if torch.cuda.is_available():
     print(f"[ OK ] GPU: {torch.cuda.get_device_name(0)}")
 PYEOF
+
+# 选了 GPU 版但 CUDA 不可用时, 给出明确的后续指引
+CUDA_OK="$("$PYTHON_CMD" -c "import torch; print(1 if torch.cuda.is_available() else 0)" 2>/dev/null || echo 0)"
+if [ "$USER_SAYS_GPU" = "1" ] && [ "$CUDA_OK" != "1" ]; then
+  echo ""
+  warn "您安装了 GPU 版 PyTorch, 但当前 CUDA 不可用 —— 最常见原因是显卡驱动未安装或未重启"
+  warn "处理方法: 安装 NVIDIA 驱动并重启电脑 (Linux 可重跑本脚本自动安装)"
+  warn "装好驱动后无需重装 PyTorch, CUDA 会直接生效"
+fi
 
 echo ""
 ok "==================== 全部完成 ===================="

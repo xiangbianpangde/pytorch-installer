@@ -120,7 +120,14 @@ if ($USER_SAYS_GPU) {
         else                    { $CUDA_TAG = "cu121" }
         Info "依据驱动版本选择 CUDA 轮子: $CUDA_TAG (轮子自带 CUDA 运行时)"
     } else {
-        Warn "您说有显卡, 但未检测到 NVIDIA 驱动 (nvidia-smi 不存在)"
+        # 未检测到驱动时, 先用 WMI 确认是否真的有 NVIDIA 显卡硬件
+        $nvidiaGpu = Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match "NVIDIA" } | Select-Object -First 1
+        if ($nvidiaGpu) {
+            Warn "检测到 NVIDIA 显卡 ($($nvidiaGpu.Name)), 但未安装驱动 (nvidia-smi 不存在)"
+        } else {
+            Warn "您说有显卡, 但未检测到 NVIDIA 显卡硬件, 也未检测到驱动"
+        }
         Warn "Windows 下驱动无法可靠地自动安装, 请手动处理:"
         Warn "  1. 到 https://www.nvidia.com/drivers 下载并安装驱动 (或用 GeForce Experience / NVIDIA App)"
         Warn "  2. 重启电脑后重新运行本脚本"
@@ -172,6 +179,16 @@ if ($LASTEXITCODE -ne 0) { Fail "PyTorch 安装失败, 请检查网络/代理后
 Write-Host ""
 Info "验证安装..."
 & $py -c "import torch; print('[ OK ] PyTorch 版本:', torch.__version__); print('[ OK ] CUDA 可用:', torch.cuda.is_available()); print('[ OK ] GPU:', torch.cuda.get_device_name(0)) if torch.cuda.is_available() else None"
+
+# 选了 GPU 版但 CUDA 不可用时, 给出明确的后续指引
+$cudaOk = ""
+try { $cudaOk = (& $py -c "import torch; print(1 if torch.cuda.is_available() else 0)" 2>$null) } catch {}
+if ($USER_SAYS_GPU -and "$cudaOk".Trim() -ne "1") {
+    Write-Host ""
+    Warn "您安装了 GPU 版 PyTorch, 但当前 CUDA 不可用 —— 最常见原因是显卡驱动未安装或未重启"
+    Warn "处理方法: 到 https://www.nvidia.com/drivers 安装驱动并重启电脑"
+    Warn "装好驱动后无需重装 PyTorch, CUDA 会直接生效"
+}
 
 Write-Host ""
 Ok "==================== 全部完成 ===================="
