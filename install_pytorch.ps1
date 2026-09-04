@@ -175,6 +175,57 @@ Info "验证安装..."
 
 Write-Host ""
 Ok "==================== 全部完成 ===================="
-if ($VENV_CREATED) { Ok "使用前请激活虚拟环境: C:\pytorch-venv\Scripts\Activate.ps1" }
+
+# ============================================================
+# 7. 使用指南
+# ============================================================
+Write-Host ""
+Info "如何使用 PyTorch (快速上手指南)"
+Write-Host "------------------------------------------------------------"
+
+if ($VENV_CREATED) {
+    Write-Host " 第 0 步: 每次使用前先激活虚拟环境"
+    Write-Host "   C:\pytorch-venv\Scripts\Activate.ps1"
+    Write-Host ""
+}
+
+Write-Host " 1. 打开 Python 即可用: import torch"
+Write-Host ""
+Write-Host " 2. 自动选择计算设备 (有 GPU 用 GPU, 否则 CPU):"
+Write-Host ""
+Write-Host '    import torch'
+Write-Host '    if torch.cuda.is_available():'
+Write-Host '        device = "cuda"          # NVIDIA 显卡'
+Write-Host '    else:'
+Write-Host '        device = "cpu"'
+Write-Host '    print(f"当前设备: {device}")'
+Write-Host ""
+
+Write-Host " 3. 最小可运行示例 (把下面内容存为 demo.py, 运行 python demo.py):"
+Write-Host ""
+Write-Host '    import torch'
+Write-Host '    device = "cuda" if torch.cuda.is_available() else "cpu"'
+Write-Host ''
+Write-Host '    x = torch.randn(3, 3, device=device)   # 张量放到 GPU/CPU'
+Write-Host '    y = x @ x.T                            # 矩阵乘法'
+Write-Host '    print("结果张量:", y)'
+Write-Host ''
+Write-Host '    # 一个 30 秒的迷你训练示例'
+Write-Host '    w = torch.tensor([1.0], device=device, requires_grad=True)'
+Write-Host '    optimizer = torch.optim.SGD([w], lr=0.1)'
+Write-Host '    for step in range(100):'
+Write-Host '        loss = (w - 5) ** 2                # 目标: 让 w 接近 5'
+Write-Host '        loss.backward()'
+Write-Host '        optimizer.step()'
+Write-Host '        optimizer.zero_grad()'
+Write-Host '    print(f"训练后 w = {w.item():.4f} (应接近 5)")'
+Write-Host ""
+
+Write-Host " 4. 常用操作:"
+Write-Host "   - 装其他库 (进虚拟环境后): pip install numpy matplotlib"
+Write-Host "   - 查看显卡是否生效:        print(torch.cuda.is_available())"
+Write-Host "   - 保存/加载模型:           torch.save(model, 'm.pt') / torch.load('m.pt')"
+Write-Host "   - 官方入门教程 (中文):      https://pytorch.org/tutorials/"
+Write-Host "------------------------------------------------------------"
 Ok "快速自检: python -c `"import torch; print(torch.cuda.is_available())`""
 Read-Host "按回车退出"

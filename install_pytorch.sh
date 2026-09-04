@@ -358,7 +358,62 @@ PYEOF
 
 echo ""
 ok "==================== 全部完成 ===================="
+
+# ============================================================
+# 7. 使用指南
+# ============================================================
+echo ""
+info "如何使用 PyTorch (快速上手指南)"
+echo "------------------------------------------------------------"
+
 if [ "$VENV_CREATED" = "1" ]; then
-  ok "使用前请激活虚拟环境: source $VENV_DIR/bin/activate"
+  echo " 第 0 步: 每次使用前先激活虚拟环境"
+  echo "   source $VENV_DIR/bin/activate"
+  echo ""
 fi
+
+echo " 1. 打开 Python 即可用: import torch"
+echo ""
+echo " 2. 自动选择计算设备 (有 GPU 用 GPU, Mac 用 MPS, 否则 CPU):"
+echo ""
+cat <<'USAGE'
+    import torch
+    if torch.cuda.is_available():
+        device = "cuda"          # NVIDIA 显卡
+    elif torch.backends.mps.is_available():
+        device = "mps"           # Apple Silicon Mac
+    else:
+        device = "cpu"
+    print(f"当前设备: {device}")
+
+USAGE
+
+echo " 3. 最小可运行示例 (把下面内容存为 demo.py, 运行 python demo.py):"
+echo ""
+cat <<'USAGE'
+    import torch
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    x = torch.randn(3, 3, device=device)   # 张量放到 GPU/MPS/CPU
+    y = x @ x.T                            # 矩阵乘法
+    print("结果张量:", y)
+
+    # 一个 30 秒的迷你训练示例
+    w = torch.tensor([1.0], device=device, requires_grad=True)
+    optimizer = torch.optim.SGD([w], lr=0.1)
+    for step in range(100):
+        loss = (w - 5) ** 2                # 目标: 让 w 接近 5
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+    print(f"训练后 w = {w.item():.4f} (应接近 5)")
+
+USAGE
+
+echo " 4. 常用操作:"
+echo "   - 装其他库 (进虚拟环境后): pip install numpy matplotlib"
+echo "   - 查看显卡是否生效:        print(torch.cuda.is_available())"
+echo "   - 保存/加载模型:           torch.save(model, 'm.pt') / torch.load('m.pt')"
+echo "   - 官方入门教程 (中文):      https://pytorch.org/tutorials/"
+echo "------------------------------------------------------------"
 ok "快速自检: python -c \"import torch; print(torch.cuda.is_available())\""
