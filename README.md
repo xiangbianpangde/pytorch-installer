@@ -4,9 +4,20 @@ PyTorch 一键自动安装脚本：自动识别 macOS / Linux / WSL / Windows(Gi
 
 ## 一条命令安装
 
+**macOS / Linux / Windows Git Bash:**
+
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/xiangbianpangde/pytorch-installer/main/install_pytorch.sh)"
 ```
+
+**Windows PowerShell (推荐 Windows 用户使用):**
+
+```powershell
+irm https://raw.githubusercontent.com/xiangbianpangde/pytorch-installer/main/install_pytorch.ps1 | iex
+```
+
+> 注意: 两条命令不要混用。PowerShell 里没有 bash, `curl` 也是 `Invoke-WebRequest` 的别名,
+> 在 PowerShell 中运行 bash 版命令会报 "找不到与参数名称 fsSL 匹配的参数"。
 
 ## 功能
 
